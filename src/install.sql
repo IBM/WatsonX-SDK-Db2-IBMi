@@ -61,9 +61,9 @@ begin
 end;
 
 create or replace procedure watsonx.logoutJob()
-  set option usrprf = *user, dynusrprf = *user, commit = *none
   program type sub
   modifies sql data
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   set watsonx.JobBearerToken = null;
   set watsonx.JobTokenExpires = null;
