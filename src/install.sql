@@ -36,7 +36,7 @@ begin
   set watsonx.spaceid = spaceid;
 end;
 
-create or replace procedure watsonx.SetProjectdForJob(projectid varchar(100))
+create or replace procedure watsonx.SetProjectIdForJob(projectid varchar(100))
   program type sub
   set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
