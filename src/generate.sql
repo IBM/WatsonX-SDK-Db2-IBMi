@@ -27,7 +27,7 @@ begin
   into response_message, response_header
   from table(HTTP_POST_VERBOSE(
     watsonx.geturl('/text/generation'),
-    json_object('model_id': model_id, 'input': text, 'parameters': parameters format json, 'space_id': watsonx.spaceid),
+    json_object('model_id': model_id, 'input': text, 'parameters': parameters format json, 'project_id': watsonx.projectid),
     json_object('headers': json_object('Authorization': 'Bearer ' concat watsonx.JobBearerToken, 'Content-Type': 'application/json', 'Accept': 'application/json'))
   )) x;
   
