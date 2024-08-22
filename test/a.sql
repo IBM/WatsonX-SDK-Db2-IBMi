@@ -4,7 +4,7 @@
 
 call watsonx.logoutjob();
 call watsonx.setapikeyforjob('');
-call watsonx.setspaceidforjob('');
+call watsonx.setprojectidforjob('');
 
 -- Should return Y
 values watsonx.ShouldGetNewToken();

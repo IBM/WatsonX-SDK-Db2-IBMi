@@ -3,7 +3,7 @@ create schema watsonx;
 create or replace variable watsonx.region varchar(16) ccsid 1208 default 'us-south';
 create or replace variable watsonx.apiVersion varchar(10) ccsid 1208 default '2023-07-07';
 create or replace variable watsonx.apikey varchar(100) ccsid 1208 default '';
-create or replace variable watsonx.spaceid varchar(100) ccsid 1208 default '';
+create or replace variable watsonx.projectid varchar(100) ccsid 1208 default '';
 create or replace variable watsonx.JobBearerToken varchar(10000) ccsid 1208 default null;
 create or replace variable watsonx.JobTokenExpires timestamp;
 
@@ -28,11 +28,11 @@ begin
   set watsonx.apikey = apikey;
 end;
 
-create or replace procedure watsonx.SetSpaceIdForJob(spaceid varchar(100))
+create or replace procedure watsonx.SetProjectIdForJob(projectid varchar(100))
   program type sub
   set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
-  set watsonx.spaceid = spaceid;
+  set watsonx.projectid = projectid;
 end;
 
 create or replace procedure watsonx.SetBearerTokenForJob(bearer_token varchar(10000), expires integer)
