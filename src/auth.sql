@@ -8,7 +8,7 @@ begin
   declare expiration_seconds integer;
   declare needsNewToken char(1) default 'Y';
   declare successful char(1) ccsid 1208 default 'N';
-  declare bearer_token varchar(1400) ccsid 1208;
+  declare bearer_token varchar(8192) ccsid 1208;
 
   set needsNewToken = watsonx.ShouldGetNewToken();
 
@@ -24,7 +24,7 @@ begin
       ), 'lax $'
       columns(
         "expires_in" integer,
-        "access_token" varchar(1400) ccsid 1208
+        "access_token" varchar(8192) ccsid 1208
       ));
       
     call watsonx.SetBearerTokenForJob(bearer_token, expiration_seconds);
