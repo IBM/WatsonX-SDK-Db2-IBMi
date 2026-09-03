@@ -13,18 +13,17 @@
 
 -- ----------------------------------------
 -- Configurable test user profile name.
--- Edit the SET statement below to change it.
+-- If your test profile is not DBSDKTEST, change the value
+-- in the two places marked <<CHANGE_TEST_USER>> below.
 -- ----------------------------------------
-CREATE OR REPLACE VARIABLE dbsdk_v1.test_user VARCHAR(10) DEFAULT 'DBSDKTEST';
-SET dbsdk_v1.test_user = 'DBSDKTEST';
 
 -- ----------------------------------------
 -- Guard 1: must be run as test_user
 -- ----------------------------------------
 BEGIN
-  IF CURRENT_USER <> dbsdk_v1.test_user THEN
+  IF CURRENT_USER <> 'DBSDKTEST' THEN  -- <<CHANGE_TEST_USER>>
     SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = 'Must be run as DBSDKTEST (edit dbsdk_v1.test_user to change)';
+      SET MESSAGE_TEXT = 'Must be run as DBSDKTEST (edit the CHANGE_TEST_USER lines to change)';
   END IF;
 END;
 
@@ -38,7 +37,7 @@ END;
 BEGIN
   IF dbsdk_v1.ollama_getserver() IS NULL THEN
     SIGNAL SQLSTATE '45001'
-      SET MESSAGE_TEXT = 'Ollama server not configured for test_user — add a conf row for DBSDKTEST and retry';
+      SET MESSAGE_TEXT = 'Ollama server not configured for test_user - add a conf row for DBSDKTEST and retry';
   END IF;
 END;
 
@@ -87,17 +86,17 @@ SELECT
 FROM sysibm.sysdummy1;
 
 -- Reset job-scope variables so the generate tests use the conf row
-SET dbsdk_v1.ollama_server   = NULL;
-SET dbsdk_v1.ollama_port     = NULL;
-SET dbsdk_v1.ollama_model    = NULL;
-SET dbsdk_v1.ollama_protocol = NULL;
+CALL dbsdk_v1.ollama_setserverforjob(NULL);
+CALL dbsdk_v1.ollama_setportforjob(NULL);
+CALL dbsdk_v1.ollama_setmodelforjob(NULL);
+CALL dbsdk_v1.ollama_setprotocolforjob(NULL);
 
 -- ============================================================
 -- Section 2: set*forme persistence (writes to dbsdk_v1.conf)
 -- ============================================================
 
 -- Teardown: remove any existing conf row for test_user
-DELETE FROM dbsdk_v1.conf WHERE usrprf = dbsdk_v1.test_user;
+DELETE FROM dbsdk_v1.conf WHERE usrprf = 'DBSDKTEST';  -- <<CHANGE_TEST_USER>>
 
 CALL dbsdk_v1.ollama_setserverforme('forme-ollama-host');
 CALL dbsdk_v1.ollama_setportforme(29999);
@@ -107,7 +106,7 @@ CALL dbsdk_v1.ollama_setprotocolforme('http');
 SELECT
   CASE
     WHEN (SELECT COUNT(*) FROM dbsdk_v1.conf
-          WHERE usrprf         = dbsdk_v1.test_user
+            WHERE usrprf         = 'DBSDKTEST'  -- <<CHANGE_TEST_USER>>
             AND ollama_server   = 'forme-ollama-host'
             AND ollama_port     = 29999
             AND ollama_model    = 'forme-model:latest'
@@ -118,11 +117,19 @@ SELECT
 FROM sysibm.sysdummy1;
 
 -- Teardown: remove the conf row written by set*forme tests
-DELETE FROM dbsdk_v1.conf WHERE usrprf = dbsdk_v1.test_user;
+DELETE FROM dbsdk_v1.conf WHERE usrprf = 'DBSDKTEST';  -- <<CHANGE_TEST_USER>>
+
+-- Section 3 uses job-scope variables set directly via set*forjob calls
+-- so it does not depend on the conf row that Section 2 deleted.
+-- Edit these values to match your real Ollama server and default model.
+CALL dbsdk_v1.ollama_setserverforjob('localhost');    -- <<CHANGE IF NEEDED>>
+CALL dbsdk_v1.ollama_setportforjob(11434);            -- <<CHANGE IF NEEDED>>
+CALL dbsdk_v1.ollama_setprotocolforjob('http');       -- <<CHANGE IF NEEDED>>
+CALL dbsdk_v1.ollama_setmodelforjob('granite4.1:8b'); -- <<CHANGE IF NEEDED>>
 
 -- ============================================================
 -- Section 3: ollama_generate — live endpoint tests
--- Uses dbsdk_v1.conf row for test_user (Guard 2 ensures it exists)
+-- Uses job-scope variables set immediately above.
 -- ============================================================
 
 -- Test: generate with default model
@@ -138,7 +145,7 @@ FROM sysibm.sysdummy1;
 -- Replace 'granite3.2:8b' with any model available on the test Ollama server
 SELECT
   CASE
-    WHEN dbsdk_v1.ollama_generate('What is 2 + 2?', 'granite3.2:8b') IS NOT NULL
+    WHEN dbsdk_v1.ollama_generate('What is 2 + 2?', 'granite4.1:8b') IS NOT NULL
     THEN 'PASS: ollama_generate returned a non-null response (explicit model_id)'
     ELSE 'FAIL: ollama_generate returned null (explicit model_id)'
   END AS test_result

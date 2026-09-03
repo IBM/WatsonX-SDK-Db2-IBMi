@@ -14,6 +14,7 @@ This directory contains SQL test scripts for the `dbsdk_v1` schema on IBM i.
 | [`test_json_object_update.sql`](test_json_object_update.sql) | `json_object_update` utility function | No |
 | [`ollama_test.sql`](ollama_test.sql) | `ollama` — config utils, `set*forme` persistence, `ollama_generate` | Yes — Ollama server |
 | [`openai_compatible_chat_generate_test.sql`](openai_compatible_chat_generate_test.sql) | `openai_compatible_chat_generate`, `set*forme` persistence | Optional (local and/or cloud) |
+| [`grant_test_user.sql`](grant_test_user.sql) | Setup — grants authority to the test user profile | No (run as schema owner) |
 
 ---
 
@@ -26,21 +27,41 @@ This directory contains SQL test scripts for the `dbsdk_v1` schema on IBM i.
 
 ### 2. Test user profile
 
-Scripts that write to `dbsdk_v1.conf` or call live endpoints must be run as a **dedicated test IBM i user profile**.  
+Scripts that write to `dbsdk_v1.conf` or call live endpoints must be run as a **dedicated test IBM i user profile**.
 The default expected profile name is **`DBSDKTEST`**.
 
-To use a different profile, edit the `SET` statement near the top of each applicable script:
-
-```sql
-SET dbsdk_v1.test_user = 'DBSDKTEST';  -- change this value
-```
+To use a different profile, search for `<<CHANGE_TEST_USER>>` in each applicable script and replace
+`'DBSDKTEST'` with your profile name. The marker appears in the user guard and teardown statements.
 
 The test profile needs:
-- `*USE` authority to the `dbsdk_v1` library and all objects within it.
-- `*CHANGE` authority to `dbsdk_v1.conf` (for `set*forme` and teardown `DELETE` statements).
+- `*EXECUTE` authority on every `dbsdk_v1` function and procedure it calls.
+- `SELECT`, `INSERT`, `UPDATE`, `DELETE` authority on `dbsdk_v1.conf`.
 - Network access from the IBM i job to any endpoint under test (Ollama, OpenAI-compatible server, etc.).
 
-### 3. Registering the test user profile
+### 3. Granting authority to the test profile
+
+The functions and procedures in `dbsdk_v1` are compiled without an explicit `set option usrprf`
+clause in the utility modules, so they default to `USRPRF(*OWNER)`. A user other than the schema
+owner will receive `SQL0551 Not authorized to object … type *PGM` (or `type *SRVPGM`) when calling them.
+
+Run [`test/grant_test_user.sql`](grant_test_user.sql) **once** as the schema owner (or any profile
+with `*SECADM` special authority) before running any test scripts:
+
+```
+-- In ACS Run SQL Scripts, connected as the schema owner:
+-- Open test/grant_test_user.sql and run all statements.
+
+-- Or from a 5250 command line:
+RUNSQLSTM SRCSTMF('/path/to/test/grant_test_user.sql') COMMIT(*NONE) NAMING(*SQL)
+```
+
+If you rename the test profile from `DBSDKTEST`, also edit every occurrence of `DBSDKTEST` in
+`grant_test_user.sql` before running it (or run the individual `GRANT` statements manually).
+
+Re-run `grant_test_user.sql` any time the schema is rebuilt, since `CREATE OR REPLACE` drops and
+re-creates the compiled program object and resets its authority list.
+
+### 4. Registering the test user profile
 
 Before running any test that calls `set*forme` procedures or live generate functions, the test user's
 row must exist in `dbsdk_v1.conf`. The simplest way to create it (as the test user):
@@ -147,12 +168,26 @@ Requires a running [Ollama](https://ollama.com/) server reachable from the IBM i
 one model pulled. The `dbsdk_v1.conf` row for the test user must have `ollama_server` set (Guard 2
 checks this before any live calls are made).
 
-The explicit-model test uses `granite3.2:8b` as the default model name. Change this to any model
+The script has three sections:
+- **Section 1** — `set*forjob` / `get*` round-trips (no live endpoint call, just job-variable manipulation)
+- **Section 2** — `set*forme` persistence tests (writes and reads `dbsdk_v1.conf`; teardown deletes the row)
+- **Section 3** — live `ollama_generate` calls; uses explicit `setserverforjob`/`setportforjob`/`setprotocolforjob` calls so it does not depend on the conf row deleted by Section 2
+
+⚠️ **Before running Section 3**, check the four `CALL` statements just above it in the script and edit them to match your environment:
+
+```sql
+CALL dbsdk_v1.ollama_setserverforjob('localhost');    -- change if different
+CALL dbsdk_v1.ollama_setportforjob(11434);            -- change if different
+CALL dbsdk_v1.ollama_setprotocolforjob('http');       -- change if different
+CALL dbsdk_v1.ollama_setmodelforjob('granite4.1:8b'); -- change to any pulled model
+```
+
+The explicit-model test also uses `granite4.1:8b` as the model name. Change this to any model
 that is pulled on your Ollama server:
 
 ```sql
 -- Near the bottom of ollama_test.sql:
-WHEN dbsdk_v1.ollama_generate('What is 2 + 2?', 'granite3.2:8b') IS NOT NULL
+WHEN dbsdk_v1.ollama_generate('What is 2 + 2?', 'granite4.1:8b') IS NOT NULL
 ```
 
 ### `openai_compatible_chat_generate_test.sql`
@@ -210,3 +245,19 @@ test row:
 ```sql
 DELETE FROM dbsdk_v1.conf WHERE usrprf = 'DBSDKTEST';
 ```
+
+---
+
+## Known limitations
+
+### Bare `SET` on global variables requires `*SRVPGM` authority
+
+`SET dbsdk_v1.<variable> = value` is a direct write to the `*SRVPGM` object that backs the global
+variable. IBM i checks `*CHANGE` authority on that object before SQL privilege evaluation; this
+authority cannot be granted via `GRANT` statements from SQL. For this reason, the test scripts never
+use bare `SET` to write `dbsdk_v1.*` variables — all variable writes are routed through the
+`set*forjob` procedures, which run as `*OWNER` and have full authority on the `*SRVPGM`.
+
+`CREATE OR REPLACE VARIABLE` similarly requires `*ADD` authority on the schema, which `DBSDKTEST`
+does not hold. The test scripts therefore use hardcoded string literals for the test profile name
+(marked `<<CHANGE_TEST_USER>>`) rather than a global variable.
