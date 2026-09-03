@@ -36,8 +36,9 @@ end;
 
 -- **Input parameters:**
 -- - `HOSTNAME` (required): The IP address or hostname of the ollama server.
-create or replace procedure dbsdk_v1.ollama_setserverforme(hostname varchar(1000) ccsid 1208 default NULL) 
+create or replace procedure dbsdk_v1.ollama_setserverforme(hostname varchar(1000) ccsid 1208 default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, hostname AS ollama_server
@@ -85,8 +86,9 @@ end;
 
 -- **Input parameters:**
 -- - `PORT` (required): The ollama server port.
-create or replace procedure dbsdk_v1.ollama_setportforme(port INT default NULL) 
+create or replace procedure dbsdk_v1.ollama_setportforme(port INT default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, port AS ollama_port
@@ -134,8 +136,9 @@ end;
 
 -- **Input parameters:**
 -- - `MODEL` (required): The ollama identifier of the model to use.
-create or replace procedure dbsdk_v1.ollama_setmodelforme(model varchar(1000) ccsid 1208 default NULL) 
+create or replace procedure dbsdk_v1.ollama_setmodelforme(model varchar(1000) ccsid 1208 default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, model AS ollama_model
@@ -182,8 +185,9 @@ end;
 -- 
 -- **Input parameters:**
 -- - `PROTOCOL` (required): `http`/`https`
-create or replace procedure dbsdk_v1.ollama_setprotocolforme(protocol varchar(1000) ccsid 1208 default NULL) 
+create or replace procedure dbsdk_v1.ollama_setprotocolforme(protocol varchar(1000) ccsid 1208 default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, protocol AS ollama_protocol

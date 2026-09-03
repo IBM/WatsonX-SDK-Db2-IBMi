@@ -32,8 +32,9 @@ end;
 
 -- **Input parameters:**
 -- - `HOSTNAME` (required): The IP address or hostname of the OpenAI-compatible server.
-create or replace procedure dbsdk_v1.openai_compatible_setserverforme(hostname varchar(1000) ccsid 1208 default NULL) 
+create or replace procedure dbsdk_v1.openai_compatible_setserverforme(hostname varchar(1000) ccsid 1208 default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, hostname AS openai_compatible_server
@@ -77,8 +78,9 @@ end;
 
 -- **Input parameters:**
 -- - `PORT` (required): The OpenAI-compatible server port.
-create or replace procedure dbsdk_v1.openai_compatible_setportforme(port INT default NULL) 
+create or replace procedure dbsdk_v1.openai_compatible_setportforme(port INT default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, port AS openai_compatible_port
@@ -122,8 +124,9 @@ end;
 
 -- **Input parameters:**
 -- - `MODEL` (required): The model identifier to use.
-create or replace procedure dbsdk_v1.openai_compatible_setmodelforme(model varchar(1000) ccsid 1208 default NULL) 
+create or replace procedure dbsdk_v1.openai_compatible_setmodelforme(model varchar(1000) ccsid 1208 default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, model AS openai_compatible_model
@@ -167,8 +170,9 @@ end;
 -- 
 -- **Input parameters:**
 -- - `PROTOCOL` (required): `http`/`https`
-create or replace procedure dbsdk_v1.openai_compatible_setprotocolforme(protocol varchar(1000) ccsid 1208 default NULL) 
+create or replace procedure dbsdk_v1.openai_compatible_setprotocolforme(protocol varchar(1000) ccsid 1208 default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, protocol AS openai_compatible_protocol
@@ -213,8 +217,9 @@ end;
 -- 
 -- **Input parameters:**
 -- - `API_KEY` (required): The API key for authentication.
-create or replace procedure dbsdk_v1.openai_compatible_setapikeyforme(api_key varchar(8000) ccsid 1208 default NULL) 
+create or replace procedure dbsdk_v1.openai_compatible_setapikeyforme(api_key varchar(8000) ccsid 1208 default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, api_key AS openai_compatible_apikey
@@ -259,8 +264,9 @@ end;
 -- 
 -- **Input parameters:**
 -- - `BASE_PATH` (required): The base path for API endpoints.
-create or replace procedure dbsdk_v1.openai_compatible_setbasepathforme(base_path varchar(1000) ccsid 1208 default NULL) 
+create or replace procedure dbsdk_v1.openai_compatible_setbasepathforme(base_path varchar(1000) ccsid 1208 default NULL)
   MODIFIES SQL DATA
+  set option usrprf = *user, dynusrprf = *user, commit = *none
 begin
   MERGE INTO dbsdk_v1.conf tt USING (
     SELECT CURRENT_USER AS usrprf, base_path AS openai_compatible_basepath
