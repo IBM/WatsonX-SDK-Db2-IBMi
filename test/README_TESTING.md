@@ -61,7 +61,38 @@ If you rename the test profile from `DBSDKTEST`, also edit every occurrence of `
 Re-run `grant_test_user.sql` any time the schema is rebuilt, since `CREATE OR REPLACE` drops and
 re-creates the compiled program object and resets its authority list.
 
-### 4. Registering the test user profile
+### 4. SSL certificate store access (HTTPS endpoints only)
+
+Tests that call cloud HTTPS endpoints (e.g. Gemini, OpenAI) use `QSYS2.HTTP_POST_VERBOSE` with
+`set option usrprf = *user`, meaning the HTTP call runs as the test user profile. IBM i's GSKit SSL
+layer opens the system key database (`*SYSTEM` DCM certificate store) as that user. If `DBSDKTEST`
+does not have read authority on the keystore, the call fails with:
+
+```
+GSKit Error 6003 - Access to the key database is not allowed
+```
+
+To grant the minimum necessary IFS authority, run the following **as a security administrator**
+(`*SECADM` or `*ALLOBJ`) from a 5250 command line:
+
+```
+CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server') USER(DBSDKTEST) DTAAUT(*RX)
+CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(DBSDKTEST) DTAAUT(*R)
+```
+
+The first command grants traverse (`*RX`) on the directory only; the second grants read (`*R`) on
+the keystore file itself. No other files in the directory are affected.
+
+To verify the current authority on the keystore file:
+
+```
+WRKAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB')
+```
+
+If you have renamed the test profile from `DBSDKTEST`, substitute your profile name in the commands
+above. This is a one-time step and does not need to be repeated when the schema is rebuilt.
+
+### 5. Registering the test user profile
 
 Before running any test that calls `set*forme` procedures or live generate functions, the test user's
 row must exist in `dbsdk_v1.conf`. The simplest way to create it (as the test user):

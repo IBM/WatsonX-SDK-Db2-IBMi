@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- Test script for openai_compatible_chat_generate
 -- and openai_compatible set*forme persistence
 -- ============================================================
@@ -22,18 +22,17 @@
 
 -- ----------------------------------------
 -- Configurable test user profile name.
--- Edit the SET statement below to change it.
+-- If your test profile is not DBSDKTEST, change the value
+-- in the places marked <<CHANGE_TEST_USER>> below.
 -- ----------------------------------------
-CREATE OR REPLACE VARIABLE dbsdk_v1.test_user VARCHAR(10) DEFAULT 'DBSDKTEST';
-SET dbsdk_v1.test_user = 'DBSDKTEST';
 
 -- ----------------------------------------
 -- Guard 1: must be run as test_user
 -- ----------------------------------------
 BEGIN
-  IF CURRENT_USER <> dbsdk_v1.test_user THEN
+  IF CURRENT_USER <> 'DBSDKTEST' THEN  -- <<CHANGE_TEST_USER>>
     SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = 'Must be run as DBSDKTEST (edit dbsdk_v1.test_user to change)';
+      SET MESSAGE_TEXT = 'Must be run as DBSDKTEST (edit the CHANGE_TEST_USER lines to change)';
   END IF;
 END;
 
@@ -56,7 +55,7 @@ BEGIN
   IF dbsdk_v1.openai_compatible_getserver() IS NULL
   OR dbsdk_v1.openai_compatible_getmodel()  IS NULL THEN
     SIGNAL SQLSTATE '45001'
-      SET MESSAGE_TEXT = 'LOCAL endpoint not configured — skipping local chat_generate tests';
+      SET MESSAGE_TEXT = 'LOCAL endpoint not configured - skipping local chat_generate tests';
   END IF;
 END;
 
@@ -111,12 +110,12 @@ SELECT
 FROM sysibm.sysdummy1;
 
 -- Reset local job-scope variables
-SET dbsdk_v1.openai_compatible_server   = NULL;
-SET dbsdk_v1.openai_compatible_port     = NULL;
-SET dbsdk_v1.openai_compatible_protocol = NULL;
-SET dbsdk_v1.openai_compatible_basepath = NULL;
-SET dbsdk_v1.openai_compatible_model    = NULL;
-SET dbsdk_v1.openai_compatible_apikey   = NULL;
+CALL dbsdk_v1.openai_compatible_setserverforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setportforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setprotocolforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setbasepathforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setmodelforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setapikeyforjob(NULL);
 
 -- ============================================================
 -- CLOUD ENDPOINT SUB-BLOCK
@@ -127,11 +126,11 @@ SET dbsdk_v1.openai_compatible_apikey   = NULL;
 
 -- Set job-scope variables for cloud endpoint
 -- Replace these values with real cloud endpoint details before running
-CALL dbsdk_v1.openai_compatible_setserverforjob('api.openai.com');
+CALL dbsdk_v1.openai_compatible_setserverforjob('generativelanguage.googleapis.com');
 CALL dbsdk_v1.openai_compatible_setportforjob(443);
 CALL dbsdk_v1.openai_compatible_setprotocolforjob('https');
-CALL dbsdk_v1.openai_compatible_setbasepathforjob('/v1');
-CALL dbsdk_v1.openai_compatible_setmodelforjob('gpt-3.5-turbo');
+CALL dbsdk_v1.openai_compatible_setbasepathforjob('/v1beta/openai');
+CALL dbsdk_v1.openai_compatible_setmodelforjob('gemini-3.6-flash');
 -- Set your API key here before running:
 CALL dbsdk_v1.openai_compatible_setapikeyforjob(NULL);
 
@@ -139,7 +138,7 @@ CALL dbsdk_v1.openai_compatible_setapikeyforjob(NULL);
 BEGIN
   IF dbsdk_v1.openai_compatible_getapikey() IS NULL THEN
     SIGNAL SQLSTATE '45002'
-      SET MESSAGE_TEXT = 'CLOUD endpoint not configured — set API key via openai_compatible_setapikeyforjob and retry';
+      SET MESSAGE_TEXT = 'CLOUD endpoint not configured - set API key via openai_compatible_setapikeyforjob and retry';
   END IF;
 END;
 
@@ -169,12 +168,12 @@ SELECT
 FROM sysibm.sysdummy1;
 
 -- Reset cloud job-scope variables
-SET dbsdk_v1.openai_compatible_server   = NULL;
-SET dbsdk_v1.openai_compatible_port     = NULL;
-SET dbsdk_v1.openai_compatible_protocol = NULL;
-SET dbsdk_v1.openai_compatible_basepath = NULL;
-SET dbsdk_v1.openai_compatible_model    = NULL;
-SET dbsdk_v1.openai_compatible_apikey   = NULL;
+CALL dbsdk_v1.openai_compatible_setserverforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setportforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setprotocolforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setbasepathforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setmodelforjob(NULL);
+CALL dbsdk_v1.openai_compatible_setapikeyforjob(NULL);
 
 -- ============================================================
 -- set*forme PERSISTENCE TESTS
@@ -183,7 +182,7 @@ SET dbsdk_v1.openai_compatible_apikey   = NULL;
 -- ============================================================
 
 -- Teardown: remove any existing conf row for test_user
-DELETE FROM dbsdk_v1.conf WHERE usrprf = dbsdk_v1.test_user;
+DELETE FROM dbsdk_v1.conf WHERE usrprf = 'DBSDKTEST';  -- <<CHANGE_TEST_USER>>
 
 CALL dbsdk_v1.openai_compatible_setapikeyforme('test-api-key-forme');
 CALL dbsdk_v1.openai_compatible_setmodelforme('forme-model-id');
@@ -192,7 +191,7 @@ CALL dbsdk_v1.openai_compatible_setbasepathforme('/forme/v1');
 SELECT
   CASE
     WHEN (SELECT COUNT(*) FROM dbsdk_v1.conf
-          WHERE usrprf                      = dbsdk_v1.test_user
+          WHERE usrprf                      = 'DBSDKTEST'  -- <<CHANGE_TEST_USER>>
             AND openai_compatible_apikey    = 'test-api-key-forme'
             AND openai_compatible_model     = 'forme-model-id'
             AND openai_compatible_basepath  = '/forme/v1') = 1
@@ -202,4 +201,4 @@ SELECT
 FROM sysibm.sysdummy1;
 
 -- Teardown: remove the conf row written by set*forme tests
-DELETE FROM dbsdk_v1.conf WHERE usrprf = dbsdk_v1.test_user;
+DELETE FROM dbsdk_v1.conf WHERE usrprf = 'DBSDKTEST';  -- <<CHANGE_TEST_USER>>
