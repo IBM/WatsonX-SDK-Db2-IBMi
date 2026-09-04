@@ -55,13 +55,15 @@
      A                                 12 72'(2/2)'
      A                                      COLOR(BLU)
      A                                 14  2'Auth Token:'
-     A            TWAUTHTN      50A  B 14 20DSPATR(ND UL)
+     A            TWAUTHTN      50A  B 14 20CHECK(LC)
+     A                                      DSPATR(ND UL)
      A                                      COLOR(WHT)
      A                                 14 72'(1/2)'
      A                                      COLOR(BLU)
      A                                 15 20'^ Starts here'
      A                                      COLOR(BLU)
-     A            TWAUTHK2      50A  B 16 20DSPATR(ND UL)
+     A            TWAUTHK2      50A  B 16 20CHECK(LC)
+     A                                      DSPATR(ND UL)
      A                                      COLOR(WHT)
      A                                 16 72'(2/2)'
      A                                      COLOR(BLU)
