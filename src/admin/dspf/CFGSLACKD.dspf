@@ -41,13 +41,15 @@
      A* Configuration Fields
      A*=====================================================================
      A                                  6  2'Webhook URL:'
-     A            SLWEBHOK      50A  B  6 20DSPATR(ND UL)
+     A            SLWEBHOK      50A  B  6 20CHECK(LC)
+     A                                      DSPATR(ND UL)
      A                                      COLOR(WHT)
      A                                  6 72'(1/2)'
      A                                      COLOR(BLU)
      A                                  7 20'^ Starts here'
      A                                      COLOR(BLU)
-     A            SLWEBHK2      50A  B  8 20DSPATR(ND UL)
+     A            SLWEBHK2      50A  B  8 20CHECK(LC)
+     A                                      DSPATR(ND UL)
      A                                      COLOR(WHT)
      A                                  8 72'(2/2)'
      A                                      COLOR(BLU)

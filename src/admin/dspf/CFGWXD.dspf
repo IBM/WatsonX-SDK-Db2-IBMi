@@ -49,7 +49,8 @@
      A                                  8 32'(e.g., 2023-07-07)'
      A                                      COLOR(BLU)
      A                                 10  2'API Key:'
-     A            WXAPIKEY     100A  B 10 20DSPATR(ND UL)
+     A            WXAPIKEY     100A  B 10 20CHECK(LC)
+     A                                      DSPATR(ND UL)
      A                                      COLOR(WHT)
      A                                 10 38'(password protected)'
      A                                      COLOR(BLU)
